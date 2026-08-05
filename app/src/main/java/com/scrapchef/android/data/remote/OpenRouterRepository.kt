@@ -1,6 +1,7 @@
 package com.scrapchef.android.data.remote
 
 import android.util.Log
+import com.scrapchef.android.util.ScrapChefLogger
 import com.scrapchef.android.BuildConfig
 import com.scrapchef.android.data.model.Recipe
 import com.scrapchef.android.data.model.Tool
@@ -41,14 +42,14 @@ class OpenRouterRepository(
     ): Result<Recipe> = withContext(Dispatchers.IO) {
         val apiKey = BuildConfig.OPENROUTER_API_KEY
         if (apiKey.isBlank() || apiKey == "YOUR_OPENROUTER_API_KEY") {
-            Log.e(TAG, "OpenRouter API key is not configured.")
+            ScrapChefLogger.e(TAG) { "OpenRouter API key is not configured." }
             return@withContext Result.failure(
                 ApiKeyInvalidException("OpenRouter API key is not configured. Please set a valid key in .env file.")
             )
         }
 
         val model = BuildConfig.OPENROUTER_MODEL.ifBlank { "google/gemma-4-26b-a4b-it:free" }
-        Log.i(TAG, "Using OpenRouter model: $model")
+        ScrapChefLogger.i(TAG) { "Using OpenRouter model: $model" }
 
         val toolNames = selectedTools.map { it.displayName }.joinToString(", ")
         val toolIds = selectedTools.map { it.id }.joinToString(", ")
@@ -108,7 +109,7 @@ class OpenRouterRepository(
             maxTokens = 2048
         )
 
-        Log.i(TAG, "Sending OpenRouter API request | model=$model ingredients=$userIngredients tools=$toolNames maxTime=$timeConstraintStr")
+        ScrapChefLogger.i(TAG) { "Sending OpenRouter API request | model=$model ingredients=$userIngredients tools=$toolNames maxTime=$timeConstraintStr" }
         val startTime = System.currentTimeMillis()
 
         // Attempt 1
@@ -116,12 +117,12 @@ class OpenRouterRepository(
         val latency = System.currentTimeMillis() - startTime
 
         if (result.isSuccess) {
-            Log.i(TAG, "OpenRouter API success | latency=${latency}ms | recipe='${result.getOrNull()?.name}'")
+            ScrapChefLogger.i(TAG) { "OpenRouter API success | latency=${latency}ms | recipe='${result.getOrNull()?.name}'" }
             return@withContext result
         }
 
         val firstError = result.exceptionOrNull()
-        Log.w(TAG, "OpenRouter API attempt 1 failed | latency=${latency}ms | error=${firstError?.message}")
+        ScrapChefLogger.w(TAG) { "OpenRouter API attempt 1 failed | latency=${latency}ms | error=${firstError?.message}" }
 
         // Don't retry rate limit or auth errors
         if (firstError is RateLimitException || firstError is ApiKeyInvalidException) {
@@ -136,18 +137,18 @@ class OpenRouterRepository(
             )
         )
 
-        Log.i(TAG, "Retrying OpenRouter API (attempt 2)")
+        ScrapChefLogger.i(TAG) { "Retrying OpenRouter API (attempt 2)" }
         val retryStart = System.currentTimeMillis()
         val retryResult = executeApiAndParse(apiKey, retryRequest, userIngredients, selectedTools, maxTimeMinutes)
         val retryLatency = System.currentTimeMillis() - retryStart
 
         if (retryResult.isSuccess) {
-            Log.i(TAG, "OpenRouter API retry success | latency=${retryLatency}ms | recipe='${retryResult.getOrNull()?.name}'")
+            ScrapChefLogger.i(TAG) { "OpenRouter API retry success | latency=${retryLatency}ms | recipe='${retryResult.getOrNull()?.name}'" }
             return@withContext retryResult
         }
 
         val finalError = retryResult.exceptionOrNull()
-        Log.e(TAG, "OpenRouter API both attempts failed | error=${finalError?.message}", finalError)
+        ScrapChefLogger.e(TAG, finalError) { "OpenRouter API both attempts failed | error=${finalError?.message}" }
 
         return@withContext Result.failure(classifyError(finalError ?: firstError!!))
     }
@@ -274,13 +275,13 @@ class OpenRouterRepository(
                         trySend(state)
                     }
                 } catch (e: Exception) {
-                    Log.w(TAG, "SSE chunk parse error: ${e.message}")
+                    ScrapChefLogger.w(TAG) { "SSE chunk parse error: ${e.message}" }
                 }
             }
 
             override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
                 val errorMsg = t?.message ?: response?.message ?: "Streaming failed"
-                Log.e(TAG, "SSE stream failure: $errorMsg", t)
+                ScrapChefLogger.e(TAG, t) { "SSE stream failure: $errorMsg" }
                 trySend(StreamingRecipeState(error = errorMsg, rawAccumulated = accumulated.toString()))
                 close(t)
             }
@@ -297,13 +298,13 @@ class OpenRouterRepository(
         val eventSource = EventSources.createFactory(OpenRouterRetrofitClient.sseClient)
             .newEventSource(httpRequest, listener)
 
-        Log.i(TAG, "SSE stream started | model=$model ingredients=$userIngredients")
+        ScrapChefLogger.i(TAG) { "SSE stream started | model=$model ingredients=$userIngredients" }
 
 
 
         awaitClose {
             eventSource.cancel()
-            Log.i(TAG, "SSE stream cancelled")
+            ScrapChefLogger.i(TAG) { "SSE stream cancelled" }
         }
     }
 
@@ -324,7 +325,7 @@ class OpenRouterRepository(
             if (response.error != null) {
                 val errorMsg = response.error.message ?: "Unknown API error"
                 val errorCode = response.error.code
-                Log.e(TAG, "OpenRouter API error in response body: code=$errorCode message=$errorMsg")
+                ScrapChefLogger.e(TAG) { "OpenRouter API error in response body: code=$errorCode message=$errorMsg" }
                 return when (errorCode) {
                     429 -> Result.failure(RateLimitException("Rate limit exceeded. Please wait a moment and try again."))
                     401, 403 -> Result.failure(ApiKeyInvalidException("API key is invalid or unauthorized. Please check your OpenRouter API key."))
@@ -339,7 +340,7 @@ class OpenRouterRepository(
                 ?.trim()
 
             if (content.isNullOrBlank()) {
-                Log.w(TAG, "OpenRouter returned empty response body")
+                ScrapChefLogger.w(TAG) { "OpenRouter returned empty response body" }
                 return Result.failure(AiGenerationException("AI returned an empty response. Please try again."))
             }
 
@@ -359,7 +360,7 @@ class OpenRouterRepository(
             Result.success(validated)
         } catch (e: HttpException) {
             val code = e.code()
-            Log.e(TAG, "OpenRouter HTTP error: $code", e)
+            ScrapChefLogger.e(TAG, e) { "OpenRouter HTTP error: $code" }
             when (code) {
                 429 -> Result.failure(RateLimitException("Rate limit exceeded. Please wait a moment and try again."))
                 402 -> Result.failure(RateLimitException("Insufficient credits. Please add credits to your OpenRouter account."))
@@ -368,13 +369,13 @@ class OpenRouterRepository(
                 else -> Result.failure(AiGenerationException("AI service error (HTTP $code). Please try again."))
             }
         } catch (e: SocketTimeoutException) {
-            Log.e(TAG, "OpenRouter API timeout", e)
+            ScrapChefLogger.e(TAG, e) { "OpenRouter API timeout" }
             Result.failure(AiTimeoutException("Recipe generation timed out. Please check your internet connection and try again."))
         } catch (e: UnknownHostException) {
-            Log.e(TAG, "Network unreachable", e)
+            ScrapChefLogger.e(TAG, e) { "Network unreachable" }
             Result.failure(NetworkException("Cannot reach the AI service. Please check your internet connection."))
         } catch (e: Exception) {
-            Log.e(TAG, "OpenRouter API call failed: ${e.javaClass.simpleName}: ${e.message}", e)
+            ScrapChefLogger.e(TAG, e) { "OpenRouter API call failed: ${e.javaClass.simpleName}: ${e.message}" }
             Result.failure(AiGenerationException("Failed to generate recipe: ${e.message ?: "Unknown error"}"))
         }
     }
@@ -389,12 +390,12 @@ class OpenRouterRepository(
         maxTimeMinutes: Int
     ): Recipe? {
         if (recipe.name.isBlank()) {
-            Log.w(TAG, "Validation failed: recipe name is blank")
+            ScrapChefLogger.w(TAG) { "Validation failed: recipe name is blank" }
             return null
         }
 
         if (recipe.effectiveInstructions.isEmpty()) {
-            Log.w(TAG, "Validation failed: no instructions in recipe")
+            ScrapChefLogger.w(TAG) { "Validation failed: no instructions in recipe" }
             return null
         }
 

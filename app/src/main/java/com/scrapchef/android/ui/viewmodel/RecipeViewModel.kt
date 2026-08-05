@@ -1,7 +1,7 @@
 package com.scrapchef.android.ui.viewmodel
 
 import android.app.Application
-import android.util.Log
+import com.scrapchef.android.util.ScrapChefLogger
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.scrapchef.android.data.local.AppDatabase
@@ -213,7 +213,7 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
                 return@launch
             }
 
-            Log.i(TAG, "Online — starting SSE streaming generation")
+            ScrapChefLogger.i(TAG) { "Online — starting SSE streaming generation" }
             onSuccess() // Navigate to generating screen immediately
 
             try {
@@ -227,7 +227,7 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
                     _streamingState.value = streamState
 
                     if (streamState.error != null) {
-                        Log.e(TAG, "Streaming error: ${streamState.error}")
+                        ScrapChefLogger.e(TAG) { "Streaming error: ${streamState.error}" }
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
@@ -244,7 +244,7 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
                         val recipe = streamState.toRecipe()
                         if (recipe != null) {
                             val isFav = repository.isFavorite(recipe.name)
-                            Log.i(TAG, "Streaming complete: '${recipe.name}' with ${recipe.effectiveInstructions.size} steps")
+                            ScrapChefLogger.i(TAG) { "Streaming complete: '${recipe.name}' with ${recipe.effectiveInstructions.size} steps" }
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
@@ -253,7 +253,7 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
                                 )
                             }
                         } else {
-                            Log.e(TAG, "Streaming complete but recipe parse failed")
+                            ScrapChefLogger.e(TAG) { "Streaming complete but recipe parse failed" }
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
@@ -267,7 +267,7 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Stream collection failed: ${e.message}", e)
+                ScrapChefLogger.e(TAG, e) { "Stream collection failed: ${e.message}" }
                 _uiState.update {
                     it.copy(
                         isLoading = false,

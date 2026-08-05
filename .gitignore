@@ -21,3 +21,5 @@ debug.keystore
 window_dump.xml
 log_all.txt
 logcat_recipe.txt
+window_dump_*.xml
+recipe_gen_logs.txt
