@@ -48,6 +48,7 @@ class OpenRouterRepository(
         }
 
         val model = BuildConfig.OPENROUTER_MODEL.ifBlank { "google/gemma-4-26b-a4b-it:free" }
+        Log.i(TAG, "Using OpenRouter model: $model")
 
         val toolNames = selectedTools.map { it.displayName }.joinToString(", ")
         val toolIds = selectedTools.map { it.id }.joinToString(", ")
@@ -107,6 +108,7 @@ class OpenRouterRepository(
             maxTokens = 2048
         )
 
+        Log.i(TAG, "Sending OpenRouter API request | model=$model ingredients=$userIngredients tools=$toolNames maxTime=$timeConstraintStr")
         val startTime = System.currentTimeMillis()
 
         // Attempt 1
@@ -114,6 +116,7 @@ class OpenRouterRepository(
         val latency = System.currentTimeMillis() - startTime
 
         if (result.isSuccess) {
+            Log.i(TAG, "OpenRouter API success | latency=${latency}ms | recipe='${result.getOrNull()?.name}'")
             return@withContext result
         }
 
@@ -133,11 +136,13 @@ class OpenRouterRepository(
             )
         )
 
+        Log.i(TAG, "Retrying OpenRouter API (attempt 2)")
         val retryStart = System.currentTimeMillis()
         val retryResult = executeApiAndParse(apiKey, retryRequest, userIngredients, selectedTools, maxTimeMinutes)
         val retryLatency = System.currentTimeMillis() - retryStart
 
         if (retryResult.isSuccess) {
+            Log.i(TAG, "OpenRouter API retry success | latency=${retryLatency}ms | recipe='${retryResult.getOrNull()?.name}'")
             return@withContext retryResult
         }
 
@@ -292,10 +297,13 @@ class OpenRouterRepository(
         val eventSource = EventSources.createFactory(OpenRouterRetrofitClient.sseClient)
             .newEventSource(httpRequest, listener)
 
+        Log.i(TAG, "SSE stream started | model=$model ingredients=$userIngredients")
+
 
 
         awaitClose {
             eventSource.cancel()
+            Log.i(TAG, "SSE stream cancelled")
         }
     }
 
