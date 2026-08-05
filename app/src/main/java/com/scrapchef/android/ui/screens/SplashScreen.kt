@@ -84,14 +84,14 @@ fun SplashScreen(
                 modifier = Modifier
                     .size(96.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(tokens.Spacing.lg),
+                    .background(androidx.compose.ui.graphics.Color.White),
                 contentAlignment = Alignment.Center
             ) {
                 androidx.compose.foundation.Image(
                     painter = painterResource(id = R.drawable.ic_scrapchef_logo),
                     contentDescription = "ScrapChef Logo",
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize().clip(CircleShape),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
                 )
             }
 

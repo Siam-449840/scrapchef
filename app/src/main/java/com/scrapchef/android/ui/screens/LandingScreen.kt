@@ -58,14 +58,14 @@ fun LandingScreen(
                             modifier = Modifier
                                 .size(32.dp)
                                 .clip(CircleShape)
-                                .background(Color.White)
-                                .padding(3.dp),
+                                .background(androidx.compose.ui.graphics.Color.White),
                             contentAlignment = Alignment.Center
                         ) {
-                            Image(
+                            androidx.compose.foundation.Image(
                                 painter = painterResource(id = R.drawable.ic_scrapchef_logo),
                                 contentDescription = "ScrapChef logo",
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
                             )
                         }
                         Spacer(modifier = Modifier.width(tokens.Spacing.sm))
