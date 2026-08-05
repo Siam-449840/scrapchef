@@ -1,7 +1,7 @@
 # ScrapChef Implementation Progress
 
 ## Milestone 1: Build Health & Stability
-- [x] Fix app startup crash (Resolved via Firebase removal)
+- [ ] Fix app startup crash
 
 ## Milestone 2: Regression Testing
 - [ ] Verify Home → Ingredient Input → Generate → Result → Kitchen Mode
