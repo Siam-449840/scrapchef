@@ -84,12 +84,20 @@ object OpenRouterRetrofitClient {
         .writeTimeout(35, TimeUnit.SECONDS)
         .build()
 
-    val service: OpenRouterApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(okHttpClient)
-            .addConverterFactory(MoshiConverterFactory.create())
-            .build()
-            .create(OpenRouterApiService::class.java)
-    }
+    @Volatile
+    private var _service: OpenRouterApiService? = null
+
+    var service: OpenRouterApiService
+        get() = _service ?: synchronized(this) {
+            _service ?: Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .client(okHttpClient)
+                .addConverterFactory(MoshiConverterFactory.create())
+                .build()
+                .create(OpenRouterApiService::class.java)
+                .also { _service = it }
+        }
+        set(value) {
+            _service = value
+        }
 }

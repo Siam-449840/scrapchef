@@ -56,6 +56,7 @@ fun GeneratingScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showCancelDialog = false
+                    viewModel.cancelGeneration()
                     onNavigateBack()
                 }) { Text("Yes, cancel") }
             },
@@ -63,6 +64,17 @@ fun GeneratingScreen(
                 TextButton(onClick = { showCancelDialog = false }) { Text("Keep going") }
             }
         )
+    }
+
+    val isComplete = streamingState.isComplete && uiState.currentRecipe != null
+
+    androidx.activity.compose.BackHandler(enabled = !isComplete && uiState.error == null) {
+        if (streamingState.progressPercent > 0.5f) {
+            showCancelDialog = true
+        } else {
+            viewModel.cancelGeneration()
+            onNavigateBack()
+        }
     }
 
     // Error state per §10.6.1
@@ -103,8 +115,6 @@ fun GeneratingScreen(
         return
     }
 
-    val isComplete = streamingState.isComplete && uiState.currentRecipe != null
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -114,6 +124,7 @@ fun GeneratingScreen(
                         if (streamingState.progressPercent > 0.5f && !isComplete) {
                             showCancelDialog = true
                         } else {
+                            viewModel.cancelGeneration()
                             onNavigateBack()
                         }
                     }) { Text(if (isComplete) "Back" else "Cancel") }

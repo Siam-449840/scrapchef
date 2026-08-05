@@ -71,6 +71,8 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
     private val _streamingState = MutableStateFlow(StreamingRecipeState())
     val streamingState: StateFlow<StreamingRecipeState> = _streamingState.asStateFlow()
 
+    private var generationJob: kotlinx.coroutines.Job? = null
+
     val favoritesFlow: StateFlow<List<FavoriteRecipeEntity>> = repository.getFavorites()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -199,7 +201,8 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
         _uiState.update { it.copy(isLoading = true, error = null) }
         _streamingState.value = StreamingRecipeState()
 
-        viewModelScope.launch {
+        generationJob?.cancel()
+        generationJob = viewModelScope.launch {
             if (!repository.isOnline()) {
                 _uiState.update {
                     it.copy(
@@ -304,6 +307,16 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
                 RecipeErrorType.AI_GENERATION_FAILED,
                 error?.message ?: "An unexpected error occurred. Please try again."
             )
+        }
+    }
+
+    fun cancelGeneration() {
+        if (generationJob?.isActive == true) {
+            generationJob?.cancel()
+            generationJob = null
+            ScrapChefLogger.i(TAG) { "Recipe generation cancelled by user" }
+            _streamingState.update { it.copy(isComplete = true) } // Stop UI loading
+            _uiState.update { it.copy(isLoading = false) }
         }
     }
 
