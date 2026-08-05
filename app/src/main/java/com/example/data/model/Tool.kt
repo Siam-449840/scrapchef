@@ -1,13 +1,5 @@
 package com.example.data.model
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Air
-import androidx.compose.material.icons.filled.Microwave
-import androidx.compose.material.icons.filled.OutdoorGrill
-import androidx.compose.material.icons.filled.SoupKitchen
-import androidx.compose.material.icons.filled.SoupKitchen
-import androidx.compose.material.icons.outlined.Restaurant
-import androidx.compose.ui.graphics.vector.ImageVector
 
 enum class Tool(val id: String, val displayName: String) {
     STOVETOP("stovetop", "Stovetop"),
