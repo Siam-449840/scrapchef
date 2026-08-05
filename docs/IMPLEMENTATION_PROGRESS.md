@@ -15,3 +15,26 @@
 ## Blockers
 
 ## Decisions During Implementation
+
+## Milestone 2: Regression Verification
+
+- [ ] Build succeeds
+- [ ] Install succeeds
+- [ ] App launches
+- [ ] Splash completes
+- [ ] Landing screen visible
+- [ ] Ingredient Input opens
+- [ ] Add ingredient
+- [ ] Generate recipe
+- [ ] Streaming works
+- [ ] Result screen opens
+- [ ] Kitchen Mode opens
+- [ ] Back navigation works
+- [ ] Favorites work
+- [ ] Pantry CRUD works
+- [ ] Settings persist
+- [ ] Rotate device
+- [ ] Dark mode
+- [ ] Background / foreground
+- [ ] No ANRs
+- [ ] No FATAL exceptions
