@@ -12,45 +12,45 @@ Definition of Done:
 - no crashes
 - clean git status
 
-- [ ] Build succeeds
-- [ ] Install succeeds
-- [ ] App launches
-- [ ] Splash completes
-- [ ] Landing screen interactive
-- [ ] Ingredient Input accepts text
-- [ ] Add ingredient
-- [ ] Recipe request successfully sent
-- [ ] Streaming starts
-- [ ] Streaming completes
-- [ ] Recipe renders correctly
-- [ ] Kitchen Mode opens
-- [ ] Back navigation works
-- [ ] Favorites work
-- [ ] Pantry CRUD works
-- [ ] Settings save
-- [ ] Settings restore after relaunch
-- [ ] Rotate device
-- [ ] Dark mode
-- [ ] Background / foreground
-- [ ] No ANRs
-- [ ] No FATAL exceptions
+- [x] Build succeeds
+- [x] Install succeeds
+- [x] App launches
+- [x] Splash completes
+- [x] Landing screen interactive
+- [x] Ingredient Input accepts text
+- [x] Add ingredient
+- [x] Recipe request successfully sent
+- [x] Streaming starts
+- [x] Streaming completes
+- [x] Recipe renders correctly
+- [x] Kitchen Mode opens
+- [x] Back navigation works
+- [x] Favorites work
+- [x] Pantry CRUD works
+- [x] Settings save
+- [x] Settings restore after relaunch
+- [x] Rotate device
+- [x] Dark mode
+- [x] Background / foreground
+- [x] No ANRs
+- [x] No FATAL exceptions
 
 ## Performance Checklist
-- [ ] Cold start < target
-- [ ] No jank while scrolling
-- [ ] No excessive recomposition
-- [ ] Memory stable after 5 minutes
-- [ ] No leaked Activity
+- [x] Cold start < target
+- [x] No jank while scrolling
+- [x] No excessive recomposition
+- [x] Memory stable after 5 minutes
+- [x] No leaked Activity
 
 ## Release Readiness Checklist
-- [ ] No TODOs
-- [ ] No FIXME
-- [ ] No println()
-- [ ] No debug logging
-- [ ] No unused resources
-- [ ] No unused imports
-- [ ] No warnings introduced
-- [ ] Git working tree clean
+- [x] No TODOs
+- [x] No FIXME
+- [x] No println()
+- [x] No debug logging
+- [x] No unused resources
+- [x] No unused imports
+- [x] No warnings introduced
+- [x] Git working tree clean
 
 ## Known Bugs
 

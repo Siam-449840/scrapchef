@@ -16,3 +16,8 @@
 local.properties
 .env
 debug.keystore
+
+# Test outputs
+window_dump.xml
+log_all.txt
+logcat_recipe.txt

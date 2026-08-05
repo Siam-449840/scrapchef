@@ -213,7 +213,6 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
                 return@launch
             }
 
-            Log.d(TAG, "Online — starting SSE streaming generation")
             onSuccess() // Navigate to generating screen immediately
 
             try {
@@ -244,7 +243,6 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
                         val recipe = streamState.toRecipe()
                         if (recipe != null) {
                             val isFav = repository.isFavorite(recipe.name)
-                            Log.d(TAG, "Streaming complete: '${recipe.name}' with ${recipe.effectiveInstructions.size} steps")
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
