@@ -3,7 +3,7 @@
 This document tracks technical deviations, architecture choices, and rationale during the Phase 1 MVP rewrite.
 
 ## 1. Complete Removal of Offline Static Recipes
-- **Context**: The old `PantryPal` codebase contained hardcoded static recipes (e.g. `SeedData.kt`) that acted as a fallback when offline.
+- **Context**: The old `ScrapChef` codebase contained hardcoded static recipes (e.g. `SeedData.kt`) that acted as a fallback when offline.
 - **Decision**: Eradicated all traces of `StaticRecipeEntity` and `SeedData.STATIC_RECIPES`. `RecipeViewModel` now immediately surfaces an `OFFLINE_NO_MATCH` error state if the network call fails.
 - **Rationale**: Strict adherence to PRD §0.1 ("No hardcoded/static recipe database fallback").
 - **Consequence**: `AppDatabase` schema was bumped to version 3, using `fallbackToDestructiveMigration` since `StaticRecipeEntity` was dropped.
