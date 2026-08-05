@@ -1,0 +1,6 @@
+{
+  "name": "ScrapChef",
+  "description": "Zero-Waste AI Recipe Generator that transforms ingredients you already own into delicious recipes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
