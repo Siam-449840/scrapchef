@@ -1,6 +1,7 @@
 package com.scrapchef.android.data.remote
 
 import com.scrapchef.android.data.model.Recipe
+import org.json.JSONObject
 
 /**
  * Represents the progressive state of a recipe being streamed from the AI.
@@ -83,13 +84,13 @@ object StreamingRecipeParser {
             tips = extractStringArray(cleaned, "tips"),
             notes = extractStringArray(cleaned, "notes"),
             warnings = extractStringArray(cleaned, "warnings"),
-            isComplete = cleaned.trimEnd().endsWith("}")
+            // Only mark complete if JSON is structurally valid (balanced braces)
+            isComplete = isJsonStructurallyComplete(cleaned)
         )
     }
 
     /** Extracts a quoted string value for a given key. */
     private fun extractString(json: String, key: String): String? {
-        // Match "key": "value" — handles escaped quotes inside value
         val pattern = Regex(""""$key"\s*:\s*"((?:[^"\\]|\\.)*)"""")
         return pattern.find(json)?.groupValues?.get(1)
             ?.replace("\\\"", "\"")
@@ -106,6 +107,7 @@ object StreamingRecipeParser {
      * Extracts a JSON string array for a given key.
      * Returns null if the key hasn't appeared yet.
      * Returns a partial list if the array is still being streamed.
+     * Uses quote-aware scanning to avoid splitting on brackets inside string values.
      */
     private fun extractStringArray(json: String, key: String): List<String>? {
         val keyIndex = json.indexOf("\"$key\"")
@@ -114,8 +116,8 @@ object StreamingRecipeParser {
         val bracketStart = json.indexOf('[', keyIndex)
         if (bracketStart == -1) return null
 
-        // Find matching close bracket, handling nesting
-        val bracketEnd = json.indexOf(']', bracketStart)
+        // Find matching close bracket with quote-awareness
+        val bracketEnd = findArrayEnd(json, bracketStart)
 
         val arrayContent = if (bracketEnd != -1) {
             json.substring(bracketStart + 1, bracketEnd)
@@ -133,5 +135,52 @@ object StreamingRecipeParser {
                 .replace("\\\"", "\"")
                 .replace("\\n", "\n")
         }.toList()
+    }
+
+    /**
+     * Finds the closing bracket of a JSON array, skipping brackets inside quoted strings.
+     * Returns -1 if no matching close bracket is found (array still streaming).
+     */
+    private fun findArrayEnd(json: String, from: Int): Int {
+        var depth = 0
+        var inString = false
+        var escaped = false
+        for (i in from until json.length) {
+            val c = json[i]
+            if (inString) {
+                if (escaped) {
+                    escaped = false
+                } else if (c == '\\') {
+                    escaped = true
+                } else if (c == '"') {
+                    inString = false
+                }
+            } else {
+                when (c) {
+                    '"' -> inString = true
+                    '[' -> depth++
+                    ']' -> {
+                        depth--
+                        if (depth == 0) return i
+                    }
+                }
+            }
+        }
+        return -1
+    }
+
+    /**
+     * Checks whether the JSON string is structurally complete by attempting a full
+     * JSONObject parse. This avoids premature completion from a stray '}' inside a string value.
+     */
+    private fun isJsonStructurallyComplete(json: String): Boolean {
+        val trimmed = json.trimEnd()
+        if (!trimmed.endsWith("}")) return false
+        return try {
+            JSONObject(trimmed)
+            true
+        } catch (_: Exception) {
+            false
+        }
     }
 }

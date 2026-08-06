@@ -7,6 +7,7 @@ import com.scrapchef.android.data.local.AppDatabase
 import com.scrapchef.android.data.model.IngredientEntity
 import com.scrapchef.android.data.model.PantryItemEntity
 import com.scrapchef.android.data.repository.ScrapChefRepository
+import com.scrapchef.android.util.ScrapChefLogger
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -68,14 +69,26 @@ class PantryViewModel(application: Application) : AndroidViewModel(application) 
 
     fun addIngredientToPantry(ingredient: IngredientEntity) {
         viewModelScope.launch {
-            repository.addPantryItem(ingredient.canonical, ingredient.category)
-            updateSearchQuery("")
+            try {
+                repository.addPantryItem(ingredient.canonical, ingredient.category)
+                updateSearchQuery("")
+            } catch (e: Exception) {
+                ScrapChefLogger.e(TAG, e) { "Failed to add pantry item: ${ingredient.canonical}" }
+            }
         }
     }
 
     fun removePantryItem(name: String) {
         viewModelScope.launch {
-            repository.removePantryItem(name)
+            try {
+                repository.removePantryItem(name)
+            } catch (e: Exception) {
+                ScrapChefLogger.e(TAG, e) { "Failed to remove pantry item: $name" }
+            }
         }
+    }
+
+    companion object {
+        private const val TAG = "ScrapChef"
     }
 }

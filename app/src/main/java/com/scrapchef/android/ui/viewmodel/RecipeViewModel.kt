@@ -1,6 +1,7 @@
 package com.scrapchef.android.ui.viewmodel
 
 import android.app.Application
+import android.os.SystemClock
 import com.scrapchef.android.util.ScrapChefLogger
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,7 +19,10 @@ import com.scrapchef.android.data.remote.RateLimitException
 import com.scrapchef.android.data.remote.StreamingRecipeState
 import com.scrapchef.android.data.repository.ScrapChefRepository
 import com.scrapchef.android.data.repository.SettingsRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +31,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.Immutable
 
@@ -42,7 +47,7 @@ data class RecipeUiState(
     val error: RecipeError? = null,
     val isCurrentRecipeFavorite: Boolean = false,
     val userMessage: String? = null,
-    
+
     // Kitchen Mode State
     val kitchenModeCurrentStep: Int = 0,
     val kitchenModeTimerSeconds: Int? = null,
@@ -71,10 +76,8 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
     private val _streamingState = MutableStateFlow(StreamingRecipeState())
     val streamingState: StateFlow<StreamingRecipeState> = _streamingState.asStateFlow()
 
-    private var generationJob: kotlinx.coroutines.Job? = null
-
-    val favoritesFlow: StateFlow<List<FavoriteRecipeEntity>> = repository.getFavorites()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    private var generationJob: Job? = null
+    private var timerJob: Job? = null
 
     /** Pre-parsed favorites — eliminates repository access from Composables. */
     val parsedFavoritesFlow: StateFlow<List<Pair<FavoriteRecipeEntity, Recipe?>>> =
@@ -88,9 +91,16 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
 
     fun deleteFavorite(name: String) {
         viewModelScope.launch {
-            repository.deleteFavoriteByName(name)
-            _uiState.update {
-                it.copy(userMessage = "Recipe removed from Favorites.")
+            try {
+                repository.deleteFavoriteByName(name)
+                _uiState.update {
+                    it.copy(userMessage = "Recipe removed from Favorites.")
+                }
+            } catch (e: Exception) {
+                ScrapChefLogger.e(TAG, e) { "Failed to delete favorite: $name" }
+                _uiState.update {
+                    it.copy(userMessage = "Couldn't remove the recipe. Please try again.")
+                }
             }
         }
     }
@@ -104,13 +114,21 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
     init {
         observeQueryDebounce()
         viewModelScope.launch {
-            settingsRepository.dietaryPreferencesFlow.collect { prefs ->
-                _dietaryPreferences.value = prefs
+            try {
+                settingsRepository.dietaryPreferencesFlow.collect { prefs ->
+                    _dietaryPreferences.value = prefs
+                }
+            } catch (e: Exception) {
+                ScrapChefLogger.e(TAG, e) { "Failed to collect dietary preferences" }
             }
         }
         viewModelScope.launch {
-            settingsRepository.countryFlow.collect { country ->
-                _cuisineCountry.value = country
+            try {
+                settingsRepository.countryFlow.collect { country ->
+                    _cuisineCountry.value = country
+                }
+            } catch (e: Exception) {
+                ScrapChefLogger.e(TAG, e) { "Failed to collect country preference" }
             }
         }
     }
@@ -230,15 +248,18 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
                     _streamingState.value = streamState
 
                     if (streamState.error != null) {
-                        ScrapChefLogger.e(TAG) { "Streaming error: ${streamState.error}" }
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                error = RecipeError(
-                                    RecipeErrorType.AI_GENERATION_FAILED,
-                                    streamState.error
+                        // Don't overwrite if stream already set a specific message
+                        if (_uiState.value.error == null) {
+                            ScrapChefLogger.e(TAG) { "Streaming error: ${streamState.error}" }
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    error = RecipeError(
+                                        RecipeErrorType.AI_GENERATION_FAILED,
+                                        streamState.error
+                                    )
                                 )
-                            )
+                            }
                         }
                         return@collect
                     }
@@ -269,13 +290,21 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
                         }
                     }
                 }
+            } catch (e: CancellationException) {
+                // Voluntary cancel — clean up without surfacing an error
+                ScrapChefLogger.i(TAG) { "Recipe generation cancelled by user" }
+                _uiState.update { it.copy(isLoading = false) }
+                throw e
             } catch (e: Exception) {
-                ScrapChefLogger.e(TAG, e) { "Stream collection failed: ${e.message}" }
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = classifyException(e)
-                    )
+                // Don't overwrite if stream already set a specific error message
+                if (_uiState.value.error == null) {
+                    ScrapChefLogger.e(TAG, e) { "Stream collection failed: ${e.message}" }
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = classifyException(e)
+                        )
+                    }
                 }
             }
         }
@@ -315,45 +344,80 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
             generationJob?.cancel()
             generationJob = null
             ScrapChefLogger.i(TAG) { "Recipe generation cancelled by user" }
-            _streamingState.update { it.copy(isComplete = true) } // Stop UI loading
-            _uiState.update { it.copy(isLoading = false) }
         }
+        _streamingState.value = StreamingRecipeState()
+        _uiState.update { it.copy(isLoading = false) }
     }
 
     fun toggleCurrentFavorite() {
         val recipe = _uiState.value.currentRecipe ?: return
         viewModelScope.launch {
-            val isNowFav = repository.toggleFavorite(recipe)
-            _uiState.update {
-                it.copy(
-                    isCurrentRecipeFavorite = isNowFav,
-                    userMessage = if (isNowFav) "Recipe saved to Favorites!" else "Recipe removed from Favorites."
-                )
+            try {
+                val isNowFav = repository.toggleFavorite(recipe)
+                _uiState.update {
+                    it.copy(
+                        isCurrentRecipeFavorite = isNowFav,
+                        userMessage = if (isNowFav) "Recipe saved to Favorites!" else "Recipe removed from Favorites."
+                    )
+                }
+            } catch (e: Exception) {
+                ScrapChefLogger.e(TAG, e) { "Failed to toggle favorite: ${recipe.name}" }
+                _uiState.update {
+                    it.copy(userMessage = "Couldn't save the recipe. Please try again.")
+                }
             }
         }
     }
 
     fun toggleFavoriteFromList(recipe: Recipe) {
         viewModelScope.launch {
-            val isNowFav = repository.toggleFavorite(recipe)
-            _uiState.update {
-                it.copy(
-                    userMessage = if (isNowFav) "Recipe saved to Favorites!" else "Recipe removed from Favorites."
-                )
+            try {
+                val isNowFav = repository.toggleFavorite(recipe)
+                _uiState.update {
+                    it.copy(
+                        userMessage = if (isNowFav) "Recipe saved to Favorites!" else "Recipe removed from Favorites."
+                    )
+                }
+            } catch (e: Exception) {
+                ScrapChefLogger.e(TAG, e) { "Failed to toggle favorite from list: ${recipe.name}" }
+                _uiState.update {
+                    it.copy(userMessage = "Couldn't save the recipe. Please try again.")
+                }
             }
         }
     }
 
+    /**
+     * Sets the recipe for detail view AND populates the streamingState so
+     * GeneratingScreen renders the correct recipe (not a previous generation).
+     */
     fun setRecipeForDetail(recipe: Recipe) {
         viewModelScope.launch {
             val isFav = repository.isFavorite(recipe.name)
             _uiState.update {
                 it.copy(currentRecipe = recipe, isCurrentRecipeFavorite = isFav)
             }
+            // Populate streamingState so GeneratingScreen shows the correct recipe
+            _streamingState.value = StreamingRecipeState(
+                name = recipe.name,
+                description = recipe.description,
+                difficulty = recipe.difficulty,
+                servings = recipe.servings,
+                totalTimeMinutes = recipe.totalTimeMinutes,
+                tools = recipe.tools,
+                yourIngredients = recipe.yourIngredients,
+                pantryAssumptions = recipe.pantryAssumptions,
+                instructions = recipe.instructions,
+                tips = recipe.tips,
+                notes = recipe.notes,
+                warnings = recipe.warnings,
+                isComplete = true
+            )
         }
     }
 
     fun resetSelections() {
+        _streamingState.value = StreamingRecipeState()
         _uiState.update {
             it.copy(
                 selectedIngredients = emptyList(),
@@ -375,26 +439,55 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun setKitchenModeTimer(seconds: Int?) {
+        timerJob?.cancel()
         _uiState.update { it.copy(kitchenModeTimerSeconds = seconds, isKitchenModeTimerRunning = false) }
     }
 
+    /**
+     * Starts or stops the kitchen timer using a monotonic clock so it continues
+     * counting correctly even when the app is backgrounded.
+     */
     fun toggleKitchenModeTimer() {
-        _uiState.update { it.copy(isKitchenModeTimerRunning = !it.isKitchenModeTimerRunning) }
-    }
-
-    fun tickKitchenModeTimer() {
-        _uiState.update { state ->
-            if (state.isKitchenModeTimerRunning && state.kitchenModeTimerSeconds != null && state.kitchenModeTimerSeconds > 0) {
-                state.copy(kitchenModeTimerSeconds = state.kitchenModeTimerSeconds - 1)
-            } else if (state.kitchenModeTimerSeconds == 0) {
-                state.copy(isKitchenModeTimerRunning = false)
-            } else {
-                state
+        val state = _uiState.value
+        if (state.isKitchenModeTimerRunning) {
+            // Stop timer
+            timerJob?.cancel()
+            _uiState.update { it.copy(isKitchenModeTimerRunning = false) }
+        } else {
+            // Start timer using elapsedRealtime (monotonic, survives suspend/background)
+            val seconds = state.kitchenModeTimerSeconds ?: return
+            if (seconds <= 0) return
+            val endTime = SystemClock.elapsedRealtime() + seconds * 1000L
+            _uiState.update { it.copy(isKitchenModeTimerRunning = true) }
+            timerJob = viewModelScope.launch {
+                while (isActive) {
+                    delay(1000)
+                    val remaining = ((endTime - SystemClock.elapsedRealtime()) / 1000L).toInt()
+                    _uiState.update {
+                        if (remaining <= 0) {
+                            it.copy(kitchenModeTimerSeconds = 0, isKitchenModeTimerRunning = false)
+                        } else {
+                            it.copy(kitchenModeTimerSeconds = remaining)
+                        }
+                    }
+                }
             }
         }
     }
 
+    /** @deprecated Use [toggleKitchenModeTimer] instead — drives timer from monotonic clock. */
+    @Deprecated("Replaced by toggleKitchenModeTimer which uses monotonic clock")
+    fun tickKitchenModeTimer() {
+        // No-op: timer is now driven internally by toggleKitchenModeTimer
+    }
+
     fun dismissError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        timerJob?.cancel()
+        generationJob?.cancel()
     }
 }

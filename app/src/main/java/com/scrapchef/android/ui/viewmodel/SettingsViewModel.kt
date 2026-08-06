@@ -53,14 +53,14 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun toggleDietaryPreference(preference: String) {
-        val currentPrefs = _uiState.value.dietaryPreferences
-        val updatedPrefs = if (currentPrefs.contains(preference)) {
-            currentPrefs - preference
-        } else {
-            currentPrefs + preference
-        }
-        
         viewModelScope.launch {
+            // Read current prefs inside the coroutine to avoid lost-update race
+            val currentPrefs = _uiState.value.dietaryPreferences
+            val updatedPrefs = if (currentPrefs.contains(preference)) {
+                currentPrefs - preference
+            } else {
+                currentPrefs + preference
+            }
             repository.setDietaryPreferences(updatedPrefs)
         }
     }

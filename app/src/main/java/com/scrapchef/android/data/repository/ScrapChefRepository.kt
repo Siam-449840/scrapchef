@@ -34,7 +34,8 @@ class ScrapChefRepository(
             ?: return false
         val network = connectivityManager.activeNetwork ?: return false
         val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+                capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
 
     suspend fun searchIngredients(query: String): List<IngredientEntity> {
@@ -113,7 +114,8 @@ class ScrapChefRepository(
             false
         } else {
             val json = recipeAdapter.toJson(recipe)
-            favoriteDao.insertFavorite(
+            // Use upsertByName to prevent duplicate favorites from concurrent toggles
+            favoriteDao.upsertFavoriteByName(
                 FavoriteRecipeEntity(name = recipe.name, recipeJson = json)
             )
             true

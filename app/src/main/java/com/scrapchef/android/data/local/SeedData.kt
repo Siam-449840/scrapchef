@@ -26,7 +26,7 @@ object SeedData {
         IngredientEntity("Cheese", "[\"cheddar\", \"mozzarella\", \"shredded cheese\", \"swiss cheese\"]", "Dairy & Eggs"),
         IngredientEntity("Butter", "[\"unsalted butter\", \"salted butter\"]", "Dairy & Eggs"),
         IngredientEntity("Milk", "[\"whole milk\", \"skim milk\", \"almond milk\"]", "Dairy & Eggs"),
-        IngredientEntity("Pasta", "[\"spaghetti\", \"penne\", \"macaroni\", \"noodes\", \"ramen\"]", "Grains & Pasta"),
+        IngredientEntity("Pasta", "[\"spaghetti\", \"penne\", \"macaroni\", \"noodles\", \"ramen\"]", "Grains & Pasta"),
         IngredientEntity("Oats", "[\"rolled oats\", \"oatmeal\", \"quick oats\"]", "Grains & Pasta"),
         IngredientEntity("Peanut Butter", "[\"pb\", \"peanut spread\"]", "Pantry"),
         IngredientEntity("Honey", "[\"raw honey\"]", "Pantry"),

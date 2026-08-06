@@ -35,7 +35,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "scrapchef_database"
                 )
-                .fallbackToDestructiveMigration(dropAllTables = true)
+                .fallbackToDestructiveMigration(dropAllTables = com.scrapchef.android.BuildConfig.DEBUG)
                 .addCallback(AppDatabaseCallback(scope))
                 .build()
                 INSTANCE = instance

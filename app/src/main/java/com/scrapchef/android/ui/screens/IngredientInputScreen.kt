@@ -91,6 +91,32 @@ fun IngredientInputScreen(
                 verticalArrangement = Arrangement.spacedBy(tokens.Spacing.md)
             ) {
 
+                // ─── Error Banner ──────────────────────────
+                if (uiState.error != null) {
+                    Card(
+                        shape = RoundedCornerShape(tokens.Radius.md),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(tokens.Spacing.md),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = uiState.error.message,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.weight(1f)
+                            )
+                            TextButton(onClick = { viewModel.dismissError() }) {
+                                Text("Dismiss")
+                            }
+                        }
+                    }
+                }
+
                 // ─── Ingredient Search ────────────────────────────
                 IngredientAutocomplete(
                     query = uiState.ingredientQuery,
@@ -232,9 +258,6 @@ fun IngredientInputScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp)
-                        .bounceClick(scaleDown = 0.97f) {
-                            if (canGenerate) viewModel.generateRecipe(onSuccess = onNavigateToRecipe)
-                        }
                         .testTag("generate_recipe_button")
                 ) {
                     Icon(

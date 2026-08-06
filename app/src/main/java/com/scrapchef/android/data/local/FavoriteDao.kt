@@ -18,6 +18,19 @@ interface FavoriteDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFavorite(favorite: FavoriteRecipeEntity): Long
 
+    /**
+     * Upserts a favorite by name — replaces the row if a favorite with the same
+     * name already exists (preventing duplicates from concurrent toggle calls).
+     */
+    @androidx.room.Transaction
+    suspend fun upsertFavoriteByName(favorite: FavoriteRecipeEntity) {
+        val existing = getFavoriteByName(favorite.name)
+        if (existing != null) {
+            deleteFavoriteByName(favorite.name)
+        }
+        insertFavorite(favorite)
+    }
+
     @Query("DELETE FROM favorites WHERE name = :name")
     suspend fun deleteFavoriteByName(name: String)
 

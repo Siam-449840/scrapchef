@@ -200,6 +200,7 @@ fun FavoritesScreen(
                                         )
 
                                         if (parsedRecipe != null) {
+                                            val recipe = parsedRecipe
                                             Spacer(modifier = Modifier.height(tokens.Spacing.xs))
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 Surface(
@@ -221,7 +222,7 @@ fun FavoritesScreen(
                                                         )
                                                         Spacer(modifier = Modifier.width(tokens.Spacing.xs))
                                                         Text(
-                                                            text = "${parsedRecipe.totalTimeMinutes} min",
+                                                            text = "${recipe.totalTimeMinutes} min",
                                                             style = MaterialTheme.typography.labelSmall,
                                                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                                                             fontWeight = FontWeight.Bold
@@ -232,7 +233,7 @@ fun FavoritesScreen(
                                                 Spacer(modifier = Modifier.width(tokens.Spacing.sm))
 
                                                 Text(
-                                                    text = "${parsedRecipe.yourIngredients.size} ingredients",
+                                                    text = "${recipe.yourIngredients.size} ingredients",
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )

@@ -62,7 +62,7 @@ fun ScrapChefNavHost() {
 
     // Only collect what's needed at the NavHost level: the favorites count for the bottom bar badge.
     // Individual screens collect their own uiState to avoid full-graph recomposition.
-    val favoritesList by viewModel.favoritesFlow.collectAsState()
+    val favoritesList by viewModel.parsedFavoritesFlow.collectAsState()
     val favoritesCount by remember { derivedStateOf { favoritesList.size } }
     
     val settingsUiState by settingsViewModel.uiState.collectAsState()

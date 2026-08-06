@@ -78,13 +78,7 @@ fun KitchenModeScreen(
         }
     }
 
-    // Timer Tick
-    LaunchedEffect(uiState.isKitchenModeTimerRunning) {
-        while (uiState.isKitchenModeTimerRunning) {
-            delay(1000L)
-            viewModel.tickKitchenModeTimer()
-        }
-    }
+    // Timer is now driven internally by ViewModel using monotonic clock — no external ticks needed
 
     Scaffold(
         topBar = {

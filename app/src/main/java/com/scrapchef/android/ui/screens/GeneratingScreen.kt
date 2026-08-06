@@ -66,10 +66,39 @@ fun GeneratingScreen(
         )
     }
 
-    val isComplete = streamingState.isComplete && uiState.currentRecipe != null
+    // When a recipe was loaded from favorites or a previous generation,
+    // prefer its fields over empty streamingState.
+    // Extract to local val to enable smart cast (delegated properties don't support it).
+    val currentRecipe = uiState.currentRecipe
+    val displayRecipe = if (currentRecipe != null && streamingState.isComplete) {
+        // Use recipe data if streamingState is also marked complete (generation finished)
+        streamingState
+    } else if (currentRecipe != null && !streamingState.isComplete && streamingState.name == null) {
+        // StreamingState is empty — we're viewing a saved recipe (from favorites or process restart)
+        // Use a synthetic state derived from currentRecipe
+        StreamingRecipeState(
+            name = currentRecipe.name,
+            description = currentRecipe.description,
+            difficulty = currentRecipe.difficulty,
+            servings = currentRecipe.servings,
+            totalTimeMinutes = currentRecipe.totalTimeMinutes,
+            tools = currentRecipe.tools,
+            yourIngredients = currentRecipe.yourIngredients,
+            pantryAssumptions = currentRecipe.pantryAssumptions,
+            instructions = currentRecipe.instructions,
+            tips = currentRecipe.tips,
+            notes = currentRecipe.notes,
+            warnings = currentRecipe.warnings,
+            isComplete = true
+        )
+    } else {
+        streamingState
+    }
+
+    val isComplete = displayRecipe.isComplete && (uiState.currentRecipe != null || displayRecipe.name != null)
 
     androidx.activity.compose.BackHandler(enabled = !isComplete && uiState.error == null) {
-        if (streamingState.progressPercent > 0.5f) {
+        if (displayRecipe.progressPercent > 0.5f) {
             showCancelDialog = true
         } else {
             viewModel.cancelGeneration()
@@ -121,7 +150,7 @@ fun GeneratingScreen(
                 title = { Text(if (isComplete) "Recipe" else "Generating…") },
                 navigationIcon = {
                     TextButton(onClick = {
-                        if (streamingState.progressPercent > 0.5f && !isComplete) {
+                        if (displayRecipe.progressPercent > 0.5f && !isComplete) {
                             showCancelDialog = true
                         } else {
                             viewModel.cancelGeneration()
@@ -177,11 +206,11 @@ fun GeneratingScreen(
         ) {
             // (1) Dish name
             AnimatedVisibility(
-                visible = streamingState.name != null,
+                visible = displayRecipe.name != null,
                 enter = fadeIn() + slideInVertically { -it / 2 }
             ) {
                 Text(
-                    text = streamingState.name ?: "",
+                    text = displayRecipe.name ?: "",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(vertical = tokens.Spacing.md)
@@ -190,11 +219,11 @@ fun GeneratingScreen(
 
             // Description
             AnimatedVisibility(
-                visible = streamingState.description != null,
+                visible = displayRecipe.description != null,
                 enter = fadeIn()
             ) {
                 Text(
-                    text = streamingState.description ?: "",
+                    text = displayRecipe.description ?: "",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = tokens.Spacing.md)
@@ -203,7 +232,7 @@ fun GeneratingScreen(
 
             // (2) Time / Tools / Difficulty row
             AnimatedVisibility(
-                visible = streamingState.totalTimeMinutes != null,
+                visible = displayRecipe.totalTimeMinutes != null,
                 enter = fadeIn() + slideInVertically { -it / 2 }
             ) {
                 Row(
@@ -211,14 +240,14 @@ fun GeneratingScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(bottom = tokens.Spacing.md)
                 ) {
-                    streamingState.totalTimeMinutes?.let { time ->
+                    displayRecipe.totalTimeMinutes?.let { time ->
                         AssistChip(
                             onClick = {},
                             label = { Text("${time} min") },
                             leadingIcon = { Icon(Icons.Outlined.AccessTime, contentDescription = null, modifier = Modifier.size(16.dp)) }
                         )
                     }
-                    streamingState.difficulty?.let { diff ->
+                    displayRecipe.difficulty?.let { diff ->
                         AssistChip(
                             onClick = {},
                             label = { Text(diff) }
@@ -229,7 +258,7 @@ fun GeneratingScreen(
 
             // (3) Your ingredients
             AnimatedVisibility(
-                visible = streamingState.yourIngredients != null,
+                visible = displayRecipe.yourIngredients != null,
                 enter = fadeIn() + slideInVertically { -it / 2 }
             ) {
                 Column(modifier = Modifier.padding(bottom = tokens.Spacing.md)) {
@@ -240,7 +269,7 @@ fun GeneratingScreen(
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(bottom = tokens.Spacing.sm)
                     )
-                    streamingState.yourIngredients?.forEach { ingredient ->
+                    displayRecipe.yourIngredients?.forEach { ingredient ->
                         Text(
                             text = "• $ingredient",
                             style = MaterialTheme.typography.bodyMedium,
@@ -252,7 +281,7 @@ fun GeneratingScreen(
 
             // (4) Pantry staples
             AnimatedVisibility(
-                visible = streamingState.pantryAssumptions != null,
+                visible = displayRecipe.pantryAssumptions != null,
                 enter = fadeIn() + slideInVertically { -it / 2 }
             ) {
                 Column(modifier = Modifier.padding(bottom = tokens.Spacing.md)) {
@@ -263,7 +292,7 @@ fun GeneratingScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = tokens.Spacing.sm)
                     )
-                    streamingState.pantryAssumptions?.forEach { staple ->
+                    displayRecipe.pantryAssumptions?.forEach { staple ->
                         Text(
                             text = "◦ $staple",
                             style = MaterialTheme.typography.bodyMedium,
@@ -275,7 +304,7 @@ fun GeneratingScreen(
             }
 
             // (5) Steps — stream in one at a time
-            if (streamingState.instructions.isNotEmpty()) {
+            if (displayRecipe.instructions.isNotEmpty()) {
                 HorizontalDivider(modifier = Modifier.padding(vertical = tokens.Spacing.sm))
                 Text(
                     text = "Steps",
@@ -283,7 +312,7 @@ fun GeneratingScreen(
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(bottom = tokens.Spacing.sm)
                 )
-                streamingState.instructions.forEachIndexed { index, step ->
+                displayRecipe.instructions.forEachIndexed { index, step ->
                     AnimatedVisibility(
                         visible = true,
                         enter = fadeIn() + slideInVertically { it / 2 }
@@ -299,7 +328,7 @@ fun GeneratingScreen(
 
             // (6) Tips
             AnimatedVisibility(
-                visible = streamingState.tips != null && streamingState.tips!!.isNotEmpty(),
+                visible = displayRecipe.tips != null && displayRecipe.tips!!.isNotEmpty(),
                 enter = fadeIn() + slideInVertically { -it / 2 }
             ) {
                 Card(
@@ -319,7 +348,7 @@ fun GeneratingScreen(
                         )
                         Spacer(modifier = Modifier.width(tokens.Spacing.sm))
                         Column {
-                            streamingState.tips?.forEach { tip ->
+                            displayRecipe.tips?.forEach { tip ->
                                 Text(
                                     text = tip,
                                     style = MaterialTheme.typography.bodySmall
@@ -331,7 +360,7 @@ fun GeneratingScreen(
             }
 
             // Loading indicator while streaming
-            if (!isComplete && streamingState.error == null) {
+            if (!isComplete && displayRecipe.error == null) {
                 Spacer(modifier = Modifier.height(tokens.Spacing.lg))
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth(),
@@ -339,7 +368,7 @@ fun GeneratingScreen(
                 )
                 Spacer(modifier = Modifier.height(tokens.Spacing.sm))
                 Text(
-                    text = if (streamingState.name == null) "Finding the perfect recipe…" else "Crafting your recipe…",
+                    text = if (displayRecipe.name == null) "Finding the perfect recipe…" else "Crafting your recipe…",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

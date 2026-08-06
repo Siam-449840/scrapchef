@@ -66,18 +66,22 @@ interface OpenRouterApiService {
 object OpenRouterRetrofitClient {
     private const val BASE_URL = "https://openrouter.ai/"
 
-    private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
-    }
-
     private val okHttpClient = OkHttpClient.Builder()
         .connectTimeout(35, TimeUnit.SECONDS)
-        .readTimeout(35, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
         .writeTimeout(35, TimeUnit.SECONDS)
-        .addInterceptor(loggingInterceptor)
+        .apply {
+            // Only log HTTP bodies in debug builds — prevents API key leakage in release logcat
+            if (com.scrapchef.android.BuildConfig.DEBUG) {
+                addInterceptor(HttpLoggingInterceptor().apply {
+                    level = HttpLoggingInterceptor.Level.BODY
+                    redactHeader("Authorization")
+                })
+            }
+        }
         .build()
 
-    /** Separate client for SSE streaming — longer read timeout, no logging body (too noisy). */
+    /** Separate client for SSE streaming — longer read timeout, no logging. */
     val sseClient: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(35, TimeUnit.SECONDS)
         .readTimeout(90, TimeUnit.SECONDS)

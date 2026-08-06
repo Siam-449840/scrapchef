@@ -1,6 +1,5 @@
 package com.scrapchef.android.data.remote
 
-import android.util.Log
 import com.scrapchef.android.util.ScrapChefLogger
 import com.scrapchef.android.BuildConfig
 import com.scrapchef.android.data.model.Recipe
@@ -106,7 +105,7 @@ class OpenRouterRepository(
                 ChatMessage(role = "user", content = userPrompt)
             ),
             temperature = 0.7f,
-            maxTokens = 2048
+            maxTokens = 4096
         )
 
         ScrapChefLogger.i(TAG) { "Sending OpenRouter API request | model=$model ingredients=$userIngredients tools=$toolNames maxTime=$timeConstraintStr" }
@@ -124,12 +123,13 @@ class OpenRouterRepository(
         val firstError = result.exceptionOrNull()
         ScrapChefLogger.w(TAG) { "OpenRouter API attempt 1 failed | latency=${latency}ms | error=${firstError?.message}" }
 
-        // Don't retry rate limit or auth errors
-        if (firstError is RateLimitException || firstError is ApiKeyInvalidException) {
+        // Don't retry rate limit, auth errors, or timeouts
+        if (firstError is RateLimitException || firstError is ApiKeyInvalidException || firstError is AiTimeoutException) {
             return@withContext Result.failure(firstError)
         }
 
-        // Attempt 2 — retry with a stronger prompt
+        // Attempt 2 — retry with backoff and a stronger prompt
+        kotlinx.coroutines.delay(2000L)
         val retryRequest = request.copy(
             messages = listOf(
                 ChatMessage(role = "system", content = systemPrompt + "\nIMPORTANT: Use STRICTLY ONLY user ingredients and allowed pantry staples. Return valid JSON only, no markdown."),
@@ -228,7 +228,7 @@ class OpenRouterRepository(
             put("model", model)
             put("stream", true)
             put("temperature", 0.7)
-            put("max_tokens", 2048)
+            put("max_tokens", 4096)
             put("messages", org.json.JSONArray().apply {
                 put(JSONObject().apply {
                     put("role", "system")
@@ -251,18 +251,43 @@ class OpenRouterRepository(
             .build()
 
         val accumulated = StringBuilder()
+        var lastParseMs = 0L
 
         val listener = object : EventSourceListener() {
             override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
                 if (data == "[DONE]") {
-                    // Final parse
-                    val finalState = StreamingRecipeParser.parse(accumulated.toString()).copy(isComplete = true)
-                    trySend(finalState)
+                    // Final parse — always emit, validating structural integrity
+                    val parsed = StreamingRecipeParser.parse(accumulated.toString())
+                    if (parsed.name != null && parsed.instructions.isNotEmpty()) {
+                        trySend(parsed.copy(isComplete = true))
+                    } else {
+                        trySend(parsed.copy(
+                            isComplete = true,
+                            error = "Recipe generation ended but the response was incomplete. Please try again."
+                        ))
+                    }
                     close()
                     return
                 }
                 try {
                     val chunk = JSONObject(data)
+
+                    // Check for API-level error chunks (rate limits, provider errors, etc.)
+                    val errorObj = chunk.optJSONObject("error")
+                    if (errorObj != null) {
+                        val errorMsg = errorObj.optString("message", "Streaming error")
+                        val errorCode = errorObj.optInt("code", 0)
+                        ScrapChefLogger.e(TAG) { "SSE error chunk: code=$errorCode message=$errorMsg" }
+                        val userMsg = when (errorCode) {
+                            429 -> "Rate limit exceeded. Please wait a moment and try again."
+                            401, 403 -> "API key is invalid or unauthorized."
+                            else -> "Generation failed: $errorMsg"
+                        }
+                        trySend(StreamingRecipeState(error = userMsg, rawAccumulated = accumulated.toString()))
+                        close()
+                        return
+                    }
+
                     val delta = chunk
                         .optJSONArray("choices")
                         ?.optJSONObject(0)
@@ -271,8 +296,13 @@ class OpenRouterRepository(
 
                     if (delta.isNotEmpty()) {
                         accumulated.append(delta)
-                        val state = StreamingRecipeParser.parse(accumulated.toString())
-                        trySend(state)
+                        // Throttle parsing: at most every 100ms, or on [DONE]
+                        val now = System.currentTimeMillis()
+                        if (now - lastParseMs >= 100) {
+                            lastParseMs = now
+                            val state = StreamingRecipeParser.parse(accumulated.toString())
+                            trySend(state)
+                        }
                     }
                 } catch (e: Exception) {
                     ScrapChefLogger.w(TAG) { "SSE chunk parse error: ${e.message}" }
@@ -280,16 +310,40 @@ class OpenRouterRepository(
             }
 
             override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
-                val errorMsg = t?.message ?: response?.message ?: "Streaming failed"
-                ScrapChefLogger.e(TAG, t) { "SSE stream failure: $errorMsg" }
-                trySend(StreamingRecipeState(error = errorMsg, rawAccumulated = accumulated.toString()))
+                // Classify HTTP errors from SSE endpoint
+                val code = response?.code ?: 0
+                val errorMsg = when (code) {
+                    429 -> "Rate limit exceeded. Please wait a moment and try again."
+                    401, 403 -> "API key is invalid or unauthorized."
+                    503 -> "AI service is temporarily unavailable. Please try again."
+                    else -> t?.message ?: response?.message ?: "Streaming failed"
+                }
+                ScrapChefLogger.e(TAG, t) { "SSE stream failure: code=$code message=$errorMsg" }
+                val finalState = StreamingRecipeState(error = errorMsg, rawAccumulated = accumulated.toString())
+                if (!trySend(finalState).isSuccess) {
+                    ScrapChefLogger.e(TAG) { "SSE terminal state dropped (channel buffer full)" }
+                }
                 close(t)
             }
 
             override fun onClosed(eventSource: EventSource) {
                 if (!isClosedForSend) {
-                    val finalState = StreamingRecipeParser.parse(accumulated.toString()).copy(isComplete = true)
-                    trySend(finalState)
+                    // Only mark complete if we have meaningful content
+                    val parsed = StreamingRecipeParser.parse(accumulated.toString())
+                    if (parsed.name != null && parsed.instructions.isNotEmpty()) {
+                        val sent = trySend(parsed.copy(isComplete = true))
+                        if (!sent.isSuccess) {
+                            ScrapChefLogger.e(TAG) { "SSE onClosed state dropped (channel buffer full)" }
+                        }
+                    } else {
+                        val sent = trySend(StreamingRecipeState(
+                            error = "Connection ended before recipe was complete. Please try again.",
+                            rawAccumulated = accumulated.toString()
+                        ))
+                        if (!sent.isSuccess) {
+                            ScrapChefLogger.e(TAG) { "SSE onClosed error state dropped (channel buffer full)" }
+                        }
+                    }
                     close()
                 }
             }
@@ -376,7 +430,7 @@ class OpenRouterRepository(
             Result.failure(NetworkException("Cannot reach the AI service. Please check your internet connection."))
         } catch (e: Exception) {
             ScrapChefLogger.e(TAG, e) { "OpenRouter API call failed: ${e.javaClass.simpleName}: ${e.message}" }
-            Result.failure(AiGenerationException("Failed to generate recipe: ${e.message ?: "Unknown error"}"))
+            Result.failure(AiGenerationException("Failed to generate recipe. Please try again."))
         }
     }
 
