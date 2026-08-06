@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [IngredientEntity::class, FavoriteRecipeEntity::class, PantryItemEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -35,11 +35,18 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "scrapchef_database"
                 )
+                .addMigrations(MIGRATION_3_4)
                 .fallbackToDestructiveMigration(dropAllTables = com.scrapchef.android.BuildConfig.DEBUG)
                 .addCallback(AppDatabaseCallback(scope))
                 .build()
                 INSTANCE = instance
                 instance
+            }
+        }
+
+        private val MIGRATION_3_4 = object : androidx.room.migration.Migration(3, 4) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_favorites_name` ON `favorites` (`name`)")
             }
         }
 
