@@ -1,13 +1,13 @@
 package com.scrapchef.android.data.repository
 
 import android.content.Context
-import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.scrapchef.android.util.ScrapChefLogger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.io.IOException
@@ -46,7 +46,7 @@ class SettingsRepository(private val context: Context) {
                 settings[ONBOARDING_COMPLETED] = completed
             }
         } catch (e: IOException) {
-            Log.e(TAG, "Failed to save onboarding status", e)
+            ScrapChefLogger.e(TAG, e) { "Failed to save onboarding status" }
         }
     }
 
@@ -56,7 +56,7 @@ class SettingsRepository(private val context: Context) {
                 settings[DIETARY_PREFS] = preferences
             }
         } catch (e: IOException) {
-            Log.e(TAG, "Failed to save dietary preferences", e)
+            ScrapChefLogger.e(TAG, e) { "Failed to save dietary preferences" }
         }
     }
 
@@ -66,7 +66,7 @@ class SettingsRepository(private val context: Context) {
                 settings[COUNTRY] = country
             }
         } catch (e: IOException) {
-            Log.e(TAG, "Failed to save country", e)
+            ScrapChefLogger.e(TAG, e) { "Failed to save country" }
         }
     }
 
@@ -76,7 +76,7 @@ class SettingsRepository(private val context: Context) {
                 settings[LANGUAGE] = language
             }
         } catch (e: IOException) {
-            Log.e(TAG, "Failed to save language", e)
+            ScrapChefLogger.e(TAG, e) { "Failed to save language" }
         }
     }
 }

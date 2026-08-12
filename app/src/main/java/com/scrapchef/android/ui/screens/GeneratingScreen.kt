@@ -328,7 +328,7 @@ fun GeneratingScreen(
 
             // (6) Tips
             AnimatedVisibility(
-                visible = displayRecipe.tips != null && displayRecipe.tips!!.isNotEmpty(),
+                visible = displayRecipe.tips?.isNotEmpty() == true,
                 enter = fadeIn() + slideInVertically { -it / 2 }
             ) {
                 Card(

@@ -121,7 +121,8 @@ class OpenRouterRepository(
         }
 
         val firstError = result.exceptionOrNull()
-        ScrapChefLogger.w(TAG) { "OpenRouter API attempt 1 failed | latency=${latency}ms | error=${firstError?.message}" }
+            ?: return@withContext Result.failure(Exception("OpenRouter API attempt 1 failed with no exception"))
+        ScrapChefLogger.w(TAG) { "OpenRouter API attempt 1 failed | latency=${latency}ms | error=${firstError.message}" }
 
         // Don't retry rate limit, auth errors, or timeouts
         if (firstError is RateLimitException || firstError is ApiKeyInvalidException || firstError is AiTimeoutException) {
@@ -150,7 +151,7 @@ class OpenRouterRepository(
         val finalError = retryResult.exceptionOrNull()
         ScrapChefLogger.e(TAG, finalError) { "OpenRouter API both attempts failed | error=${finalError?.message}" }
 
-        return@withContext Result.failure(classifyError(finalError ?: firstError!!))
+        return@withContext Result.failure(classifyError(finalError ?: firstError))
     }
 
     /**
