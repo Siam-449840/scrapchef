@@ -50,7 +50,7 @@ scrapchef/
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/scrapchef.git
+    git clone https://github.com/Siam-449840/scrapchef.git
     cd scrapchef
     ```
 
