@@ -18,6 +18,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -27,13 +29,6 @@ import com.scrapchef.android.ui.theme.LocalScrapChefTokens
 import com.scrapchef.android.ui.theme.bounceClick
 import com.scrapchef.android.ui.viewmodel.RecipeUiState
 import com.scrapchef.android.ui.viewmodel.RecipeViewModel
-
-private val QUICK_SUGGESTIONS = listOf(
-    "15-minute dinners",
-    "Surprise me",
-    "One-pot meals",
-    "No-cook ideas"
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +42,7 @@ fun LandingScreen(
     val tokens = LocalScrapChefTokens.current
     val extendedColors = LocalExtendedColors.current
     val scrollState = rememberScrollState()
+    val quickSuggestions = stringArrayResource(R.array.landing_quick_suggestions)
 
     Scaffold(
         bottomBar = bottomBar,
@@ -64,13 +60,13 @@ fun LandingScreen(
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.ic_scrapchef_logo),
-                                contentDescription = "ScrapChef logo",
+                                contentDescription = stringResource(R.string.cd_scrapchef_logo),
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
                         Spacer(modifier = Modifier.width(tokens.Spacing.sm))
                         Text(
-                            text = "ScrapChef",
+                            text = stringResource(R.string.app_name),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -113,13 +109,13 @@ fun LandingScreen(
                         verticalArrangement = Arrangement.spacedBy(tokens.Spacing.md)
                     ) {
                         Text(
-                            text = "What's in your kitchen?",
+                            text = stringResource(R.string.landing_hero_title),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Type your ingredients and get a recipe in seconds.",
+                            text = stringResource(R.string.landing_hero_subtitle),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -143,7 +139,7 @@ fun LandingScreen(
                             )
                             Spacer(modifier = Modifier.width(tokens.Spacing.sm))
                             Text(
-                                text = "Start Cooking",
+                                text = stringResource(R.string.action_start_cooking),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold
                             )
@@ -154,7 +150,7 @@ fun LandingScreen(
                 // ─── Quick Suggestions ────────────────────────────
                 Column(verticalArrangement = Arrangement.spacedBy(tokens.Spacing.sm)) {
                     Text(
-                        text = "Quick ideas",
+                        text = stringResource(R.string.landing_quick_ideas),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -165,7 +161,7 @@ fun LandingScreen(
                             .fillMaxWidth()
                             .horizontalScroll(rememberScrollState())
                     ) {
-                        QUICK_SUGGESTIONS.forEach { label ->
+                        quickSuggestions.forEach { label ->
                             Surface(
                                 shape = RoundedCornerShape(tokens.Radius.pill),
                                 color = MaterialTheme.colorScheme.secondaryContainer,
@@ -192,7 +188,7 @@ fun LandingScreen(
 
                 // ─── Footer ───────────────────────────────────────
                 Text(
-                    text = "We only ever use what you tell us you have, plus basic staples like salt, oil, and water.",
+                    text = stringResource(R.string.landing_footer),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center,

@@ -12,7 +12,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.scrapchef.android.R
 import com.scrapchef.android.ui.theme.LocalScrapChefTokens
 import com.scrapchef.android.ui.viewmodel.SettingsViewModel
 
@@ -46,10 +48,10 @@ fun CountryLanguageScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Country & Language") },
+                title = { Text(stringResource(R.string.country_language_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 }
             )
@@ -65,12 +67,12 @@ fun CountryLanguageScreen(
                 Tab(
                     selected = tabIndex == 0,
                     onClick = { tabIndex = 0 },
-                    text = { Text("Country") }
+                    text = { Text(stringResource(R.string.tab_country)) }
                 )
                 Tab(
                     selected = tabIndex == 1,
                     onClick = { tabIndex = 1 },
-                    text = { Text("Language") }
+                    text = { Text(stringResource(R.string.tab_language)) }
                 )
             }
             
@@ -79,7 +81,7 @@ fun CountryLanguageScreen(
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        placeholder = { Text("Search countries") },
+                        placeholder = { Text(stringResource(R.string.search_countries)) },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth().padding(bottom = tokens.Spacing.md),
                         singleLine = true
@@ -106,7 +108,7 @@ fun CountryLanguageScreen(
                                     modifier = Modifier.weight(1f)
                                 )
                                 if (isSelected) {
-                                    Icon(Icons.Default.Check, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary)
+                                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_selected), tint = MaterialTheme.colorScheme.primary)
                                 }
                             }
                         }
@@ -132,7 +134,7 @@ fun CountryLanguageScreen(
                                     modifier = Modifier.weight(1f)
                                 )
                                 if (isSelected) {
-                                    Icon(Icons.Default.Check, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary)
+                                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_selected), tint = MaterialTheme.colorScheme.primary)
                                 }
                             }
                         }

@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.scrapchef.android.R
@@ -90,7 +91,7 @@ fun SplashScreen(
             ) {
                 androidx.compose.foundation.Image(
                     painter = painterResource(id = R.drawable.ic_scrapchef_logo),
-                    contentDescription = "ScrapChef Logo",
+                    contentDescription = stringResource(R.string.cd_scrapchef_logo),
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -98,7 +99,7 @@ fun SplashScreen(
             Spacer(modifier = Modifier.height(tokens.Spacing.xxl))
 
             Text(
-                text = "ScrapChef",
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.displaySmall,
                 color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.ExtraBold
@@ -119,13 +120,13 @@ fun SplashScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = "AI",
+                        contentDescription = stringResource(R.string.cd_ai),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(tokens.IconSize.sm)
                     )
                     Spacer(modifier = Modifier.width(tokens.Spacing.xs))
                     Text(
-                        text = "AI Culinary Engine",
+                        text = stringResource(R.string.splash_ai_engine),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         fontWeight = FontWeight.Medium

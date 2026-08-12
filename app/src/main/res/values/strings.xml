@@ -1,3 +1,40 @@
 <resources>
     <string name="app_name">ScrapChef</string>
+
+    <!-- Shared actions / content descriptions -->
+    <string name="cd_back">Back</string>
+    <string name="cd_selected">Selected</string>
+    <string name="cd_scrapchef_logo">ScrapChef logo</string>
+    <string name="search_countries">Search countries</string>
+    <string name="action_start_cooking">Start Cooking</string>
+    <string name="action_continue">Continue</string>
+    <string name="action_skip_for_now">Skip for now</string>
+
+    <!-- Splash -->
+    <string name="cd_ai">AI</string>
+    <string name="splash_ai_engine">AI Culinary Engine</string>
+
+    <!-- Landing -->
+    <string name="landing_hero_title">What\'s in your kitchen?</string>
+    <string name="landing_hero_subtitle">Type your ingredients and get a recipe in seconds.</string>
+    <string name="landing_quick_ideas">Quick ideas</string>
+    <string name="landing_footer">We only ever use what you tell us you have, plus basic staples like salt, oil, and water.</string>
+    <string-array name="landing_quick_suggestions">
+        <item>15-minute dinners</item>
+        <item>Surprise me</item>
+        <item>One-pot meals</item>
+        <item>No-cook ideas</item>
+    </string-array>
+
+    <!-- Onboarding -->
+    <string name="onboarding_where_do_you_cook">Where do you cook?</string>
+    <string name="onboarding_what_language">What language should ScrapChef speak?</string>
+    <string name="onboarding_avoid_title">Anything we should always avoid?</string>
+    <string name="onboarding_dietary_subtitle">Select any dietary preferences. We\'ll ensure all generated recipes respect these.</string>
+    <string name="onboarding_change_later">You can change this later in Profile</string>
+
+    <!-- Country & Language -->
+    <string name="country_language_title">Country &amp; Language</string>
+    <string name="tab_country">Country</string>
+    <string name="tab_language">Language</string>
 </resources>

@@ -15,9 +15,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.scrapchef.android.R
 import com.scrapchef.android.ui.theme.LocalScrapChefTokens
 import com.scrapchef.android.ui.viewmodel.SettingsViewModel
 
@@ -65,7 +67,7 @@ fun OnboardingScreen(
                 navigationIcon = {
                     if (currentStep > 1) {
                         IconButton(onClick = { currentStep-- }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                         }
                     }
                 }
@@ -95,7 +97,7 @@ fun OnboardingScreen(
                 1 -> {
                     // Step 1: Country
                     Text(
-                        text = "Where do you cook?",
+                        text = stringResource(R.string.onboarding_where_do_you_cook),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
@@ -104,7 +106,7 @@ fun OnboardingScreen(
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        placeholder = { Text("Search countries") },
+                        placeholder = { Text(stringResource(R.string.search_countries)) },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth().padding(bottom = tokens.Spacing.md),
                         singleLine = true
@@ -130,7 +132,7 @@ fun OnboardingScreen(
                                 if (isSelected) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
-                                        contentDescription = "Selected",
+                                        contentDescription = stringResource(R.string.cd_selected),
                                         tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
@@ -141,7 +143,7 @@ fun OnboardingScreen(
                 2 -> {
                     // Step 2: Language
                     Text(
-                        text = "What language should ScrapChef speak?",
+                        text = stringResource(R.string.onboarding_what_language),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
@@ -167,7 +169,7 @@ fun OnboardingScreen(
                                 if (isSelected) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
-                                        contentDescription = "Selected",
+                                        contentDescription = stringResource(R.string.cd_selected),
                                         tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
@@ -178,14 +180,14 @@ fun OnboardingScreen(
                 3 -> {
                     // Step 3: Dietary Preferences
                     Text(
-                        text = "Anything we should always avoid?",
+                        text = stringResource(R.string.onboarding_avoid_title),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(bottom = tokens.Spacing.sm)
                     )
                     Text(
-                        text = "Select any dietary preferences. We'll ensure all generated recipes respect these.",
+                        text = stringResource(R.string.onboarding_dietary_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = tokens.Spacing.lg)
@@ -233,12 +235,12 @@ fun OnboardingScreen(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(if (currentStep == 3) "Start Cooking" else "Continue")
+                    Text(if (currentStep == 3) stringResource(R.string.action_start_cooking) else stringResource(R.string.action_continue))
                 }
                 
                 if (currentStep < 3) {
                     Text(
-                        text = "You can change this later in Profile",
+                        text = stringResource(R.string.onboarding_change_later),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -254,7 +256,7 @@ fun OnboardingScreen(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Skip for now")
+                        Text(stringResource(R.string.action_skip_for_now))
                     }
                 }
             }
