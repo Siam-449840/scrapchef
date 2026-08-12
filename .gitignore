@@ -17,9 +17,13 @@ local.properties
 .env
 debug.keystore
 
-# Test outputs
-window_dump.xml
+# Test / debug outputs
+window_dump*.xml
 log_all.txt
-logcat_recipe.txt
-window_dump_*.xml
+logcat*.txt
 recipe_gen_logs.txt
+logs/
+
+# Local dev tooling (not part of the app build)
+/analyze_logo.py
+/generate_icons.py
