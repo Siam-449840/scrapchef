@@ -37,4 +37,44 @@
     <string name="country_language_title">Country &amp; Language</string>
     <string name="tab_country">Country</string>
     <string name="tab_language">Language</string>
+
+    <!-- Pantry -->
+    <string name="pantry_title">My Pantry</string>
+    <string name="pantry_add_ingredient">Add Ingredient</string>
+    <string name="pantry_empty_title">Your pantry is empty</string>
+    <string name="pantry_empty_subtitle">Add ingredients to build your kitchen inventory.</string>
+    <string name="pantry_category_other">Other</string>
+    <string name="cd_remove">Remove</string>
+
+    <!-- Ingredient input -->
+    <string name="ingredient_input_title">What do you have?</string>
+    <string name="action_dismiss">Dismiss</string>
+    <string name="input_selected_label">Selected</string>
+    <string name="input_cooking_tools">Cooking Tools</string>
+    <string name="input_prep_time">Prep Time</string>
+    <string name="input_cta_select_more">Select at least 3 ingredients</string>
+    <string name="input_cta_cook">Cook something</string>
+    <string name="input_staples_footer">Pantry staples we always assume: salt, pepper, oil, water</string>
+
+    <!-- Ingredient autocomplete / chip -->
+    <string name="search_ingredients_placeholder">Search ingredients…</string>
+    <string name="cd_search">Search</string>
+    <string name="cd_clear_search">Clear search</string>
+    <string name="add_custom_ingredient_label">Add \"%1$s\"</string>
+    <string name="custom_ingredient_subtitle">Custom ingredient</string>
+    <string name="cd_add_ingredient">Add %1$s</string>
+    <string name="cd_remove_ingredient">Remove %1$s</string>
+    <string name="input_max_ingredients">Maximum 8 ingredients selected</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_ai_chef">AI Chef</string>
+    <string name="nav_saved">Saved</string>
+    <string name="nav_pantry">Pantry</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Prep time options -->
+    <string name="time_15_min">15 min</string>
+    <string name="time_30_min">30 min</string>
+    <string name="time_45_min">45 min</string>
+    <string name="time_no_limit">No limit</string>
 </resources>

@@ -39,8 +39,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.scrapchef.android.R
 import com.scrapchef.android.data.model.PantryItemEntity
 import com.scrapchef.android.ui.theme.LocalExtendedColors
 import com.scrapchef.android.ui.theme.LocalScrapChefTokens
@@ -73,7 +75,7 @@ fun PantryScreen(
                         )
                         Spacer(modifier = Modifier.width(tokens.Spacing.sm))
                         Text(
-                            text = "My Pantry",
+                            text = stringResource(R.string.pantry_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -88,10 +90,10 @@ fun PantryScreen(
             ExtendedFloatingActionButton(
                 onClick = onNavigateToAdd,
                 icon = {
-                    Icon(Icons.Default.Add, contentDescription = "Add Ingredient")
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.pantry_add_ingredient))
                 },
                 text = {
-                    Text("Add Ingredient", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.pantry_add_ingredient), fontWeight = FontWeight.Bold)
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -122,13 +124,13 @@ fun PantryScreen(
                     )
                     Spacer(modifier = Modifier.height(tokens.Spacing.md))
                     Text(
-                        text = "Your pantry is empty",
+                        text = stringResource(R.string.pantry_empty_title),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(tokens.Spacing.xs))
                     Text(
-                        text = "Add ingredients to build your kitchen inventory.",
+                        text = stringResource(R.string.pantry_empty_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -150,7 +152,7 @@ fun PantryScreen(
                     groupedItems.forEach { (category, items) ->
                         stickyHeader {
                             Text(
-                                text = category.ifBlank { "Other" },
+                                text = category.ifBlank { stringResource(R.string.pantry_category_other) },
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
@@ -207,7 +209,7 @@ private fun PantryItemRow(
             IconButton(onClick = onRemove, modifier = Modifier.size(24.dp)) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Remove",
+                    contentDescription = stringResource(R.string.cd_remove),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

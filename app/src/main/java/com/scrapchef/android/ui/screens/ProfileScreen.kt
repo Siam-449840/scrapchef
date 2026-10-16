@@ -41,6 +41,18 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import com.scrapchef.android.ui.theme.LocalExtendedColors
 import com.scrapchef.android.ui.theme.LocalScrapChefTokens
 import com.scrapchef.android.ui.viewmodel.SettingsViewModel
@@ -58,6 +70,9 @@ fun ProfileScreen(
     val extendedColors = LocalExtendedColors.current
     val scrollState = rememberScrollState()
     val uiState by viewModel.uiState.collectAsState()
+    var showPuterDialog by remember { mutableStateOf(false) }
+    var inputToken by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -119,7 +134,97 @@ fun ProfileScreen(
                     onClick = onNavigateToCountryLang
                 )
             }
+
+            // Puter AI Account Section (User-Pays Model)
+            ProfileSection("AI Engine & Account") {
+                val puterStatus = if (uiState.hasPuterAuthToken) {
+                    "Connected (${uiState.maskedPuterToken})"
+                } else {
+                    "Not Connected • Connect Puter Account"
+                }
+                ProfileSettingRow(
+                    icon = Icons.Default.AutoAwesome,
+                    title = "Puter AI Account",
+                    subtitle = puterStatus,
+                    onClick = {
+                        inputToken = ""
+                        showPuterDialog = true
+                    },
+                    testTag = "setting_puter_account"
+                )
+            }
         }
+    }
+
+    if (showPuterDialog) {
+        AlertDialog(
+            onDismissRequest = { showPuterDialog = false },
+            title = {
+                Text(
+                    text = "Puter AI Account",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(tokens.Spacing.md)) {
+                    Text(
+                        text = "ScrapChef uses Puter AI under the User-Pays model. Connecting your personal Puter account provides dedicated usage quotas without shared API keys.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    OutlinedTextField(
+                        value = inputToken,
+                        onValueChange = { inputToken = it },
+                        label = { Text("Puter Auth Token") },
+                        placeholder = { Text("Paste your token here") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedButton(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://puter.com/"))
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Get Token from puter.com")
+                    }
+
+                    if (uiState.hasPuterAuthToken) {
+                        TextButton(
+                            onClick = {
+                                viewModel.clearPuterAuthToken()
+                                showPuterDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Disconnect Current Account", color = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (inputToken.isNotBlank()) {
+                            viewModel.setPuterAuthToken(inputToken.trim())
+                        }
+                        showPuterDialog = false
+                    },
+                    enabled = inputToken.isNotBlank()
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPuterDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

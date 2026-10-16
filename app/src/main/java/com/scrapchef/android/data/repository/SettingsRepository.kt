@@ -12,16 +12,29 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
+import com.scrapchef.android.util.AndroidKeystoreTokenEncryptor
+import com.scrapchef.android.util.TokenEncryptor
+
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
-class SettingsRepository(private val context: Context) {
+class SettingsRepository(
+    private val context: Context,
+    private val tokenEncryptor: TokenEncryptor = AndroidKeystoreTokenEncryptor()
+) {
     private val DIETARY_PREFS = stringSetPreferencesKey("dietary_preferences")
     private val ONBOARDING_COMPLETED = androidx.datastore.preferences.core.booleanPreferencesKey("onboarding_completed")
     private val COUNTRY = stringPreferencesKey("country")
     private val LANGUAGE = stringPreferencesKey("language")
+    private val PUTER_AUTH_TOKEN = stringPreferencesKey("puter_auth_token")
 
     companion object {
         private const val TAG = "ScrapChef"
+    }
+
+    val puterAuthTokenFlow: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[PUTER_AUTH_TOKEN]?.let { encrypted ->
+            tokenEncryptor.decrypt(encrypted).takeIf { it.isNotBlank() }
+        }
     }
 
     val dietaryPreferencesFlow: Flow<Set<String>> = context.dataStore.data.map { preferences ->
@@ -77,6 +90,20 @@ class SettingsRepository(private val context: Context) {
             }
         } catch (e: IOException) {
             ScrapChefLogger.e(TAG, e) { "Failed to save language" }
+        }
+    }
+
+    suspend fun setPuterAuthToken(token: String?) {
+        try {
+            context.dataStore.edit { settings ->
+                if (token.isNullOrBlank()) {
+                    settings.remove(PUTER_AUTH_TOKEN)
+                } else {
+                    settings[PUTER_AUTH_TOKEN] = tokenEncryptor.encrypt(token.trim())
+                }
+            }
+        } catch (e: IOException) {
+            ScrapChefLogger.e(TAG, e) { "Failed to save Puter auth token" }
         }
     }
 }

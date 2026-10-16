@@ -1,0 +1,13 @@
+{
+  "name": "scrapchef",
+  "version": "1.0.0",
+  "description": "ScrapChef - Zero-waste AI recipe generator powered by Puter.js",
+  "main": "scripts/verify_puter.js",
+  "scripts": {
+    "test:puter": "node scripts/verify_puter.js"
+  },
+  "dependencies": {
+    "@heyputer/puter.js": "^2.6.2"
+  },
+  "license": "Apache-2.0"
+}

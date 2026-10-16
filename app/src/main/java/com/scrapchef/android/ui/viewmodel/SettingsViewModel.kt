@@ -14,7 +14,9 @@ data class SettingsUiState(
     val dietaryPreferences: Set<String> = emptySet(),
     val isOnboardingCompleted: Boolean = false,
     val country: String = "",
-    val language: String = ""
+    val language: String = "",
+    val hasPuterAuthToken: Boolean = false,
+    val maskedPuterToken: String = ""
 )
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -42,6 +44,24 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             repository.languageFlow.collect { language ->
                 _uiState.update { it.copy(language = language) }
+            }
+        }
+        viewModelScope.launch {
+            repository.puterAuthTokenFlow.collect { token ->
+                val hasToken = !token.isNullOrBlank()
+                val masked = if (hasToken && token!!.length > 8) {
+                    "${token.take(4)}...${token.takeLast(4)}"
+                } else if (hasToken) {
+                    "****"
+                } else {
+                    ""
+                }
+                _uiState.update {
+                    it.copy(
+                        hasPuterAuthToken = hasToken,
+                        maskedPuterToken = masked
+                    )
+                }
             }
         }
     }
@@ -74,6 +94,18 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun setLanguage(language: String) {
         viewModelScope.launch {
             repository.setLanguage(language)
+        }
+    }
+
+    fun setPuterAuthToken(token: String) {
+        viewModelScope.launch {
+            repository.setPuterAuthToken(token)
+        }
+    }
+
+    fun clearPuterAuthToken() {
+        viewModelScope.launch {
+            repository.setPuterAuthToken(null)
         }
     }
 }

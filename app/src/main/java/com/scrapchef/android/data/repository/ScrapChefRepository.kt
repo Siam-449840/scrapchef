@@ -11,18 +11,22 @@ import com.scrapchef.android.data.model.FavoriteRecipeEntity
 import com.scrapchef.android.data.model.IngredientEntity
 import com.scrapchef.android.data.model.Recipe
 import com.scrapchef.android.data.model.Tool
-import com.scrapchef.android.data.remote.OpenRouterRepository
+import com.scrapchef.android.data.remote.PuterRepository
 import com.scrapchef.android.data.remote.StreamingRecipeState
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 
 class ScrapChefRepository(
     private val context: Context,
     private val ingredientDao: IngredientDao,
     private val favoriteDao: FavoriteDao,
     private val pantryDao: PantryDao,
-    private val openRouterRepository: OpenRouterRepository = OpenRouterRepository()
+    private val settingsRepository: SettingsRepository = SettingsRepository(context),
+    private val puterRepository: PuterRepository = PuterRepository(
+        tokenProvider = { settingsRepository.puterAuthTokenFlow.firstOrNull() }
+    )
 ) {
     private val moshi = Moshi.Builder().build()
     private val listType = Types.newParameterizedType(List::class.java, String::class.java)
@@ -75,7 +79,7 @@ class ScrapChefRepository(
         dietaryPreferences: Set<String> = emptySet(),
         cuisineCountry: String = ""
     ): Result<Recipe> {
-        return openRouterRepository.generateRecipe(
+        return puterRepository.generateRecipe(
             userIngredients, selectedTools, maxTimeMinutes,
             dietaryPreferences, cuisineCountry
         )
@@ -92,7 +96,7 @@ class ScrapChefRepository(
         dietaryPreferences: Set<String> = emptySet(),
         cuisineCountry: String = ""
     ): kotlinx.coroutines.flow.Flow<StreamingRecipeState> {
-        return openRouterRepository.generateRecipeStream(
+        return puterRepository.generateRecipeStream(
             userIngredients, selectedTools, maxTimeMinutes,
             dietaryPreferences, cuisineCountry
         )

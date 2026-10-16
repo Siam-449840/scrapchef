@@ -13,9 +13,10 @@ import com.scrapchef.android.data.model.RecipeErrorType
 import com.scrapchef.android.data.model.Tool
 import com.scrapchef.android.data.remote.AiGenerationException
 import com.scrapchef.android.data.remote.AiTimeoutException
-import com.scrapchef.android.data.remote.ApiKeyInvalidException
+import com.scrapchef.android.data.remote.PuterAuthException
+import com.scrapchef.android.data.remote.PuterQuotaException
+import com.scrapchef.android.data.remote.PuterRateLimitException
 import com.scrapchef.android.data.remote.NetworkException
-import com.scrapchef.android.data.remote.RateLimitException
 import com.scrapchef.android.data.remote.StreamingRecipeState
 import com.scrapchef.android.data.repository.ScrapChefRepository
 import com.scrapchef.android.data.repository.SettingsRepository
@@ -306,15 +307,26 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
                         )
                     }
                 }
+            } finally {
+                // Bug 5 fix: Guarantee loading state resets even on unexpected collection exits
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }
 
     private fun classifyException(error: Throwable?): RecipeError {
         return when (error) {
-            is ApiKeyInvalidException -> RecipeError(
+            is PuterAuthException -> RecipeError(
                 RecipeErrorType.API_KEY_INVALID,
-                error.message ?: "API key is invalid."
+                error.message ?: "Puter authentication failed or token is missing."
+            )
+            is PuterQuotaException -> RecipeError(
+                RecipeErrorType.AI_GENERATION_FAILED,
+                error.message ?: "Puter monthly usage allowance exhausted."
+            )
+            is PuterRateLimitException -> RecipeError(
+                RecipeErrorType.AI_GENERATION_FAILED,
+                error.message ?: "Rate limit exceeded. Please wait and try again."
             )
             is AiTimeoutException -> RecipeError(
                 RecipeErrorType.API_TIMEOUT,
@@ -323,10 +335,6 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
             is NetworkException -> RecipeError(
                 RecipeErrorType.NETWORK_ERROR,
                 error.message ?: "Network error."
-            )
-            is RateLimitException -> RecipeError(
-                RecipeErrorType.AI_GENERATION_FAILED,
-                error.message ?: "Rate limit exceeded. Please wait and try again."
             )
             is AiGenerationException -> RecipeError(
                 RecipeErrorType.AI_GENERATION_FAILED,

@@ -23,22 +23,28 @@
 
 # ─── Moshi: keep @JsonClass annotated models and generated adapters ───
 -keep class com.scrapchef.android.data.model.** { *; }
--keep class com.scrapchef.android.data.remote.ChatMessage { *; }
--keep class com.scrapchef.android.data.remote.ChatCompletionRequest { *; }
--keep class com.scrapchef.android.data.remote.ChatCompletionResponse { *; }
--keep class com.scrapchef.android.data.remote.ChatChoice { *; }
--keep class com.scrapchef.android.data.remote.OpenRouterError { *; }
+-keep class com.scrapchef.android.data.remote.PuterMessage { *; }
+-keep class com.scrapchef.android.data.remote.PuterDriverArgs { *; }
+-keep class com.scrapchef.android.data.remote.PuterDriverRequest { *; }
+-keep class com.scrapchef.android.data.remote.PuterMessageResponse { *; }
+-keep class com.scrapchef.android.data.remote.PuterResult { *; }
+-keep class com.scrapchef.android.data.remote.PuterError { *; }
+-keep class com.scrapchef.android.data.remote.PuterDriverResponse { *; }
 -keep class com.scrapchef.android.data.remote.StreamingRecipeState { *; }
 -keep class com.scrapchef.android.data.remote.AiGenerationException
 -keep class com.scrapchef.android.data.remote.AiTimeoutException
--keep class com.scrapchef.android.data.remote.ApiKeyInvalidException
+-keep class com.scrapchef.android.data.remote.PuterAuthException
+-keep class com.scrapchef.android.data.remote.PuterQuotaException
+-keep class com.scrapchef.android.data.remote.PuterRateLimitException
 -keep class com.scrapchef.android.data.remote.NetworkException
--keep class com.scrapchef.android.data.remote.RateLimitException
 
-# ─── Room: keep entity classes ───
+# ─── Room: keep entity classes, DAOs, and Database impls ───
 -keep class com.scrapchef.android.data.model.FavoriteRecipeEntity { *; }
 -keep class com.scrapchef.android.data.model.IngredientEntity { *; }
 -keep class com.scrapchef.android.data.model.PantryItemEntity { *; }
+-keep class com.scrapchef.android.data.local.** { *; }
+-keep class * extends androidx.room.RoomDatabase { *; }
+-keep class com.scrapchef.android.data.repository.** { *; }
 
 # ─── OkHttp / Retrofit ───
 -dontwarn okhttp3.**
@@ -48,3 +54,10 @@
 # ─── BuildConfig: keep generated config for API key access ───
 -keep class com.scrapchef.android.BuildConfig { *; }
 
+# ─── ViewModels & Architecture Components ───
+-keep class com.scrapchef.android.ui.viewmodel.** { *; }
+-keepclassmembers class * extends androidx.lifecycle.ViewModel {
+    public <init>(...);
+}
+-keep class com.scrapchef.android.util.TokenEncryptor { *; }
+-keep class com.scrapchef.android.util.AndroidKeystoreTokenEncryptor { *; }

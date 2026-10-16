@@ -44,7 +44,7 @@ scrapchef/
 
 ### Prerequisites
 *   Android Studio (latest version recommended)
-*   An active API key for the underlying recipe generation engine.
+*   A Puter account / authentication token for recipe generation ([puter.com](https://puter.com)).
 
 ### Setup Instructions
 
@@ -54,12 +54,14 @@ scrapchef/
     cd scrapchef
     ```
 
-2.  **Configure API Keys:**
+2.  **Configure API Keys & Models:**
     *   Create a `.env` file in the root project directory (use `.env.example` as a template).
-    *   Add your API key:
+    *   Add your Puter configuration:
         ```properties
-        OPENROUTER_API_KEY="your_api_key_here"
+        PUTER_AUTH_TOKEN="your_puter_auth_token_here"
+        PUTER_MODEL="gpt-5-nano"
         ```
+    *   *Note on Puter User-Pays Model:* In production, each user can link their personal Puter account in the app settings, allowing individual usage tracking and quotas without embedding shared developer credentials in the APK.
 
 3.  **Build and Run:**
     *   Open the project in Android Studio.

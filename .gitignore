@@ -27,3 +27,5 @@ logs/
 # Local dev tooling (not part of the app build)
 /analyze_logo.py
 /generate_icons.py
+node_modules/
+dist/
